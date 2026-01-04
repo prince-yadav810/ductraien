@@ -1,0 +1,188 @@
+/* Score Logger Styles */
+
+.score-logger {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.logger-form {
+    padding: 24px;
+}
+
+.form-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+}
+
+/* Form Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Total Display */
+.form-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+}
+
+.total-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.total-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.total-value.good {
+    color: var(--accent-orange);
+}
+
+.total-value.excellent {
+    color: var(--accent-green);
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+}
+
+.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Recent Scores */
+.recent-scores {
+    padding: 24px;
+}
+
+.no-scores {
+    color: var(--text-tertiary);
+    font-size: 14px;
+    text-align: center;
+    padding: 24px;
+}
+
+.scores-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.score-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.score-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.score-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 80px;
+}
+
+.score-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-blue);
+}
+
+.score-date {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.score-breakdown {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+}
+
+.subject {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 100px;
+}
+
+.subject.phy {
+    background: rgba(0, 122, 255, 0.1);
+    color: var(--accent-blue);
+}
+
+.subject.chem {
+    background: rgba(52, 199, 89, 0.1);
+    color: var(--accent-green);
+}
+
+.subject.bio {
+    background: rgba(175, 82, 222, 0.1);
+    color: var(--accent-purple);
+}
+
+.time {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.delete-btn {
+    padding: 8px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.delete-btn:hover {
+    background: rgba(255, 59, 48, 0.1);
+    color: var(--accent-red);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}

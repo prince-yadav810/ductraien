@@ -1,0 +1,142 @@
+/* Score Chart Styles */
+
+.score-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.no-data {
+    padding: 48px;
+    text-align: center;
+}
+
+.no-data h3 {
+    font-size: 18px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.no-data p {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Chart Cards */
+.chart-card {
+    padding: 24px;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.chart-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.chart-count {
+    font-size: 13px;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    padding: 4px 10px;
+    border-radius: 100px;
+}
+
+.chart-container {
+    position: relative;
+}
+
+.line-chart {
+    height: 250px;
+}
+
+.bar-chart {
+    height: 220px;
+}
+
+/* Average Stats */
+.avg-stats {
+    padding: 24px;
+}
+
+.avg-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.avg-item {
+    display: grid;
+    grid-template-columns: 100px 80px 1fr;
+    align-items: center;
+    gap: 16px;
+}
+
+.avg-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.avg-value {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.avg-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.avg-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 0.5s ease;
+}
+
+.avg-item.phy .avg-fill {
+    background: linear-gradient(90deg, rgba(0, 122, 255, 0.5), var(--accent-blue));
+}
+
+.avg-item.chem .avg-fill {
+    background: linear-gradient(90deg, rgba(52, 199, 89, 0.5), var(--accent-green));
+}
+
+.avg-item.bio .avg-fill {
+    background: linear-gradient(90deg, rgba(175, 82, 222, 0.5), var(--accent-purple));
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .avg-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .avg-value {
+        order: -1;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .avg-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        order: -2;
+    }
+}

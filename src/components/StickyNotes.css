@@ -1,0 +1,318 @@
+/* Sticky Notes Container */
+.sticky-notes-container {
+    padding-bottom: 40px;
+}
+
+.sticky-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.sticky-header h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.add-note-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--text-primary);
+    color: white;
+    border: none;
+    border-radius: 100px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-md);
+}
+
+.add-note-btn:hover {
+    transform: translateY(-2px);
+    background: #000;
+    box-shadow: var(--shadow-lg);
+}
+
+/* Notes Grid */
+.notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* Individual Note Card */
+.sticky-note {
+    position: relative;
+    padding: 16px;
+    border-radius: 2px;
+    /* Slight roundness for sticky note paper look */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    border-bottom-right-radius: 20px 5px;
+    /* Curl effect */
+}
+
+.sticky-note:hover {
+    transform: translateY(-4px) rotate(1deg);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.04);
+    z-index: 2;
+}
+
+.sticky-note.pinned {
+    border: 2px solid var(--text-primary);
+    transform: rotate(-1deg);
+}
+
+.sticky-note.pinned:hover {
+    transform: translateY(-4px) rotate(-1.5deg);
+}
+
+.note-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.sticky-note:hover .note-actions {
+    opacity: 1;
+}
+
+.right-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.action-btn {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
+
+.pin-btn.active {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.05);
+    transform: rotate(45deg);
+}
+
+.delete-btn:hover {
+    color: var(--accent-red);
+    background: rgba(255, 59, 48, 0.1);
+}
+
+.note-content {
+    flex: 1;
+    background: transparent;
+    border: none;
+    resize: none;
+    font-family: 'Handlee', var(--font-ui);
+    /* Ideally a handwritten font, falling back to UI font */
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    outline: none;
+    width: 100%;
+    min-height: 120px;
+}
+
+.note-footer {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+    text-align: right;
+    opacity: 0.7;
+}
+
+/* Color Picker Popover */
+.color-picker-wrapper {
+    position: relative;
+}
+
+.mini-color-palette {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    padding: 8px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+    margin-top: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.mini-color-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.mini-color-dot:hover {
+    transform: scale(1.2);
+}
+
+/* Modal Styles */
+.add-note-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    /* Very subtle frost */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.add-note-modal {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-xl);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    transform: scale(0.95);
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popIn {
+    to {
+        transform: scale(1);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 4px;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
+
+.note-input {
+    width: 100%;
+    min-height: 200px;
+    border: none;
+    resize: none;
+    font-size: 18px;
+    line-height: 1.6;
+    outline: none;
+    color: var(--text-primary);
+    background: transparent;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.color-picker {
+    display: flex;
+    gap: 10px;
+}
+
+.color-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background-clip: padding-box;
+    transition: transform 0.2s;
+}
+
+.color-dot:hover {
+    transform: scale(1.1);
+}
+
+.color-dot.active {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 2px var(--text-primary);
+}
+
+.save-btn {
+    padding: 10px 24px;
+    background: var(--text-primary);
+    color: white;
+    border: none;
+    border-radius: 100px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.save-btn:not(:disabled):hover {
+    background: #000;
+    transform: scale(1.02);
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding: 60px;
+    color: var(--text-tertiary);
+    font-size: 16px;
+}
