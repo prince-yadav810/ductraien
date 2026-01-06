@@ -91,6 +91,15 @@ export const getTestScores = async () => {
     }
 };
 
+export const deleteTestScore = async (scoreId) => {
+    try {
+        await deleteDoc(doc(db, 'testScores', scoreId));
+    } catch (error) {
+        console.error('Error deleting test score:', error);
+        throw error;
+    }
+};
+
 // ===== Gamification Stats =====
 export const saveStats = async (stats) => {
     try {
@@ -116,6 +125,41 @@ export const getStats = async () => {
         console.error('Error getting stats:', error);
         return null;
     }
+};
+
+// ===== Timer State (for persistence across reloads/devices) =====
+export const saveTimerState = async (timerState) => {
+    try {
+        await setDoc(doc(db, 'timerState', USER_ID), {
+            ...timerState,
+            userId: USER_ID,
+            updatedAt: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error saving timer state:', error);
+        throw error;
+    }
+};
+
+export const getTimerState = async () => {
+    try {
+        const docSnap = await getDoc(doc(db, 'timerState', USER_ID));
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting timer state:', error);
+        return null;
+    }
+};
+
+export const onTimerStateChange = (callback) => {
+    return onSnapshot(doc(db, 'timerState', USER_ID), (docSnap) => {
+        if (docSnap.exists()) {
+            callback(docSnap.data());
+        }
+    });
 };
 
 // ===== Sticky Notes =====
@@ -190,6 +234,54 @@ export const getQuestionLogs = async () => {
     }
 };
 
+// ===== Focus Sessions =====
+export const saveFocusSession = async (session) => {
+    try {
+        const sessionId = `${USER_ID}_${Date.now()}`;
+        await setDoc(doc(db, 'focusSessions', sessionId), {
+            ...session,
+            id: sessionId,
+            userId: USER_ID,
+            createdAt: new Date().toISOString()
+        });
+        return sessionId;
+    } catch (error) {
+        console.error('Error saving focus session:', error);
+        throw error;
+    }
+};
+
+export const getFocusSessions = async () => {
+    try {
+        const snapshot = await getDocs(collection(db, 'focusSessions'));
+        const sessions = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === USER_ID) {
+                sessions.push(data);
+            }
+        });
+        return sessions;
+    } catch (error) {
+        console.error('Error getting focus sessions:', error);
+        return [];
+    }
+};
+
+export const onFocusSessionsChange = (callback) => {
+    const q = collection(db, 'focusSessions');
+    return onSnapshot(q, (snapshot) => {
+        const sessions = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === USER_ID) {
+                sessions.push(data);
+            }
+        });
+        callback(sessions);
+    });
+};
+
 // ===== Real-time Listeners =====
 export const onCompletedTasksChange = (callback) => {
     const q = collection(db, 'completedTasks');
@@ -213,6 +305,20 @@ export const onStatsChange = (callback) => {
     });
 };
 
+export const onTestScoresChange = (callback) => {
+    const q = query(collection(db, 'testScores'), orderBy('date', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const scores = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === USER_ID) {
+                scores.push(data);
+            }
+        });
+        callback(scores);
+    });
+};
+
 export const onNotesChange = (callback) => {
     const q = collection(db, 'notes');
     return onSnapshot(q, (snapshot) => {
@@ -224,5 +330,19 @@ export const onNotesChange = (callback) => {
             }
         });
         callback(notes);
+    });
+};
+
+export const onQuestionLogsChange = (callback) => {
+    const q = collection(db, 'questionLogs');
+    return onSnapshot(q, (snapshot) => {
+        const logs = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === USER_ID) {
+                logs.push(data);
+            }
+        });
+        callback(logs);
     });
 };

@@ -9,10 +9,10 @@ import './QuestionTracker.css';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const SUBJECTS = [
-    { id: 'physics', name: 'Physics', color: '#007aff', bgColor: 'rgba(0, 122, 255, 0.1)' },
-    { id: 'chemistry', name: 'Chemistry', color: '#ff9500', bgColor: 'rgba(255, 149, 0, 0.1)' },
-    { id: 'botany', name: 'Botany', color: '#34c759', bgColor: 'rgba(52, 199, 89, 0.1)' },
-    { id: 'zoology', name: 'Zoology', color: '#af52de', bgColor: 'rgba(175, 82, 222, 0.1)' },
+    { id: 'physics', name: 'Physics', color: '#007aff', bgColor: 'rgba(0, 122, 255, 0.1)', chartColor: 'rgba(0, 122, 255, 0.5)' },
+    { id: 'chemistry', name: 'Chemistry', color: '#ff9500', bgColor: 'rgba(255, 149, 0, 0.1)', chartColor: 'rgba(255, 149, 0, 0.5)' },
+    { id: 'botany', name: 'Botany', color: '#34c759', bgColor: 'rgba(52, 199, 89, 0.1)', chartColor: 'rgba(52, 199, 89, 0.5)' },
+    { id: 'zoology', name: 'Zoology', color: '#af52de', bgColor: 'rgba(175, 82, 222, 0.1)', chartColor: 'rgba(175, 82, 222, 0.5)' },
 ];
 
 const QuestionTracker = () => {
@@ -36,7 +36,10 @@ const QuestionTracker = () => {
     const totalQuestions = dailyQuestions.reduce((sum, e) => sum + (e.total || 0), 0);
     const totalCorrect = dailyQuestions.reduce((sum, e) => sum + (e.totalCorrect || 0), 0);
     const overallAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-    const streak = dailyQuestions.length;
+
+    // Calculate streak based on unique days (not total entries)
+    const uniqueDays = new Set(dailyQuestions.map(e => e.date)).size;
+    const streak = uniqueDays;
 
     const handleInputChange = (subject, type, value) => {
         setFormData(prev => ({
@@ -94,13 +97,13 @@ const QuestionTracker = () => {
             {
                 label: 'Correct',
                 data: last7Days.map(d => d.entry?.[subjectId]?.correct || 0),
-                backgroundColor: '#34c759',
+                backgroundColor: 'rgba(52, 199, 89, 0.5)',
                 borderRadius: 4,
             },
             {
                 label: 'Wrong',
                 data: last7Days.map(d => d.entry?.[subjectId]?.wrong || 0),
-                backgroundColor: '#ff3b30',
+                backgroundColor: 'rgba(255, 59, 48, 0.5)',
                 borderRadius: 4,
             },
         ],
@@ -112,7 +115,7 @@ const QuestionTracker = () => {
         datasets: SUBJECTS.map(sub => ({
             label: sub.name,
             data: last7Days.map(d => d.entry?.[sub.id]?.total || 0),
-            backgroundColor: sub.color,
+            backgroundColor: sub.chartColor,
             borderRadius: 4,
         })),
     };

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { ACTIVITY_TYPES, RANKS, ACHIEVEMENTS } from '../data/scheduleData';
 import * as firebaseService from '../services/firebaseService';
 
@@ -33,6 +33,18 @@ export const AppProvider = ({ children }) => {
         streakCurrent: 0,
         streakMax: 0,
         lastCompletedDate: null,
+    });
+
+    // Timer state - persists across tab switches within the app
+    const [timerState, setTimerState] = useState({
+        mode: 'work',
+        timeLeft: 25 * 60,
+        isRunning: false,
+        sessionsCompleted: 0,
+        selectedWorkDuration: 25,
+        selectedBreakDuration: 5,
+        startTime: null,
+        expectedEndTime: null,
     });
 
     // Derived stats
@@ -105,12 +117,13 @@ export const AppProvider = ({ children }) => {
     // Load data from Firebase
     const loadFromFirebase = async () => {
         try {
-            const [tasks, scores, savedStats, notes, questions] = await Promise.all([
+            const [tasks, scores, savedStats, notes, questions, savedTimerState] = await Promise.all([
                 firebaseService.getCompletedTasks(),
                 firebaseService.getTestScores(),
                 firebaseService.getStats(),
                 firebaseService.getNotes(),
-                firebaseService.getQuestionLogs()
+                firebaseService.getQuestionLogs(),
+                firebaseService.getTimerState()
             ]);
 
             setCompletedTasks(tasks);
@@ -118,6 +131,31 @@ export const AppProvider = ({ children }) => {
             if (savedStats) setStats(savedStats);
             setStickyNotes(notes);
             setDailyQuestions(questions);
+
+            // Restore timer state if exists and timer was running
+            if (savedTimerState && savedTimerState.expectedEndTime) {
+                const now = Date.now();
+                const remaining = Math.max(0, Math.floor((savedTimerState.expectedEndTime - now) / 1000));
+
+                if (remaining > 0 && savedTimerState.isRunning) {
+                    // Timer is still valid, restore it
+                    setTimerState({
+                        ...savedTimerState,
+                        timeLeft: remaining
+                    });
+                } else if (remaining <= 0 && savedTimerState.isRunning) {
+                    // Timer has ended while away
+                    setTimerState({
+                        ...savedTimerState,
+                        timeLeft: 0,
+                        isRunning: false,
+                        expectedEndTime: null
+                    });
+                } else {
+                    // Timer was not running, restore state
+                    setTimerState(savedTimerState);
+                }
+            }
         } catch (error) {
             console.error('Error loading from Firebase:', error);
         }
@@ -140,12 +178,75 @@ export const AppProvider = ({ children }) => {
             setStickyNotes(notes);
         });
 
+        // Listen to test scores changes
+        const unsubScores = firebaseService.onTestScoresChange((scores) => {
+            setTestScores(scores);
+        });
+
+        // Listen to question logs changes
+        const unsubQuestions = firebaseService.onQuestionLogsChange((questions) => {
+            setDailyQuestions(questions);
+        });
+
         return () => {
             unsubTasks();
             unsubStats();
             unsubNotes();
+            unsubScores();
+            unsubQuestions();
         };
     };
+
+    // Save timer state to Firebase when it changes (for persistence across reloads/devices)
+    const timerSaveTimeoutRef = useRef(null);
+    useEffect(() => {
+        // Debounce saves to avoid too many writes
+        if (timerSaveTimeoutRef.current) {
+            clearTimeout(timerSaveTimeoutRef.current);
+        }
+
+        timerSaveTimeoutRef.current = setTimeout(() => {
+            if (timerState.isRunning || timerState.sessionsCompleted > 0) {
+                firebaseService.saveTimerState(timerState);
+            }
+        }, 500);
+
+        return () => {
+            if (timerSaveTimeoutRef.current) {
+                clearTimeout(timerSaveTimeoutRef.current);
+            }
+        };
+    }, [timerState]);
+
+    // Timer interval - runs in context so it persists across tab switches
+    useEffect(() => {
+        let interval = null;
+
+        if (timerState.isRunning && timerState.timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimerState(prev => {
+                    // Calculate remaining time based on expected end time
+                    if (prev.expectedEndTime) {
+                        const now = Date.now();
+                        const remaining = Math.max(0, Math.floor((prev.expectedEndTime - now) / 1000));
+                        return { ...prev, timeLeft: remaining };
+                    }
+                    return { ...prev, timeLeft: prev.timeLeft - 1 };
+                });
+            }, 1000);
+        } else if (timerState.timeLeft === 0 && timerState.isRunning) {
+            // Timer completed - stop it
+            setTimerState(prev => ({
+                ...prev,
+                isRunning: false,
+                expectedEndTime: null
+            }));
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [timerState.isRunning, timerState.timeLeft]);
 
     // Initialize and migrate data
     useEffect(() => {
@@ -248,9 +349,14 @@ export const AppProvider = ({ children }) => {
 
     // Delete test score
     const deleteTestScore = async (scoreId) => {
-        const newScores = testScores.filter((s) => s.id !== scoreId);
-        setTestScores(newScores);
-        // Note: You'll need to add deleteTestScore to firebaseService if needed
+        try {
+            await firebaseService.deleteTestScore(scoreId);
+            // Reload scores from Firebase to ensure consistency
+            const scores = await firebaseService.getTestScores();
+            setTestScores(scores);
+        } catch (error) {
+            console.error('Error deleting test score:', error);
+        }
     };
 
     // Add daily question entry
@@ -273,8 +379,9 @@ export const AppProvider = ({ children }) => {
         const total = totalCorrect + totalWrong;
         const accuracy = total > 0 ? Math.round((totalCorrect / total) * 100) : 0;
 
+        // Use date as ID so each day has only ONE entry (updates replace existing)
         const newEntry = {
-            id: `${today}_${Date.now()}`,
+            id: today,
             date: today,
             physics: { correct: questionData.physics?.correct || 0, wrong: questionData.physics?.wrong || 0, total: physicsTotal },
             chemistry: { correct: questionData.chemistry?.correct || 0, wrong: questionData.chemistry?.wrong || 0, total: chemistryTotal },
@@ -284,14 +391,11 @@ export const AppProvider = ({ children }) => {
             totalWrong,
             total,
             accuracy,
-            createdAt: new Date().toISOString()
+            updatedAt: new Date().toISOString()
         };
 
         await firebaseService.saveQuestionLog(newEntry);
-
-        // Reload questions from Firebase
-        const questions = await firebaseService.getQuestionLogs();
-        setDailyQuestions(questions);
+        // Real-time listener will update the state automatically
     };
 
     // Sticky Notes CRUD
@@ -422,6 +526,8 @@ export const AppProvider = ({ children }) => {
         updateStickyNote,
         deleteStickyNote,
         togglePinStickyNote,
+        timerState,
+        setTimerState,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

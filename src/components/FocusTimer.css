@@ -305,4 +305,118 @@
     .tips-grid {
         grid-template-columns: 1fr;
     }
+
+    .duration-section {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .focus-stats-section {
+        padding: 16px;
+    }
+
+    .focus-stats-header {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* Mode Toggle & Mute Buttons */
+.mode-toggle-btn,
+.mute-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid #e5e5ea;
+    background: white;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-left: 8px;
+}
+
+.mode-toggle-btn:hover,
+.mute-btn:hover {
+    background: #f5f5f7;
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.mute-btn {
+    color: var(--accent-blue);
+}
+
+/* Duration Section with Labels */
+.duration-section {
+    display: flex;
+    gap: 32px;
+    justify-content: center;
+    width: 100%;
+}
+
+.duration-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.duration-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.duration-pill.break.active {
+    background: rgba(52, 199, 89, 0.1);
+    border-color: #34c759;
+    color: #34c759;
+}
+
+/* Focus Stats Section */
+.focus-stats-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.focus-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.focus-stats-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.today-focus {
+    font-size: 14px;
+    color: var(--text-secondary);
+    background: rgba(0, 122, 255, 0.08);
+    padding: 6px 14px;
+    border-radius: 100px;
+}
+
+.today-focus strong {
+    color: var(--accent-blue);
+}
+
+.focus-chart-container {
+    height: 180px;
 }
