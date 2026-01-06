@@ -1,81 +1,124 @@
-const CACHE_NAME = 'ductraien-v1';
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/src/main.jsx',
-    '/src/App.jsx',
-    '/src/App.css',
-    '/logo.png',
+// Service Worker with Network-First Strategy for better updates
+// Update this version number on each deploy to force cache refresh
+const CACHE_VERSION = 'v2-' + Date.now();
+const CACHE_NAME = 'ductraien-' + CACHE_VERSION;
+
+// Static assets to cache (only icons/images)
+const STATIC_CACHE = [
     '/icon-192.png',
-    '/icon-512.png'
+    '/icon-512.png',
+    '/logo.png'
 ];
 
-// Install event - cache resources
+// Install event - cache static resources
 self.addEventListener('install', (event) => {
+    console.log('[SW] Installing new version:', CACHE_NAME);
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
+                console.log('[SW] Caching static assets');
+                return cache.addAll(STATIC_CACHE);
             })
             .catch((err) => {
-                console.log('Cache installation failed:', err);
+                console.log('[SW] Cache installation failed:', err);
             })
     );
+    // Force waiting SW to become active immediately
     self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up ALL old caches
 self.addEventListener('activate', (event) => {
+    console.log('[SW] Activating new version:', CACHE_NAME);
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
+                    // Delete ALL caches except current
                     if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
+                        console.log('[SW] Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
         })
     );
+    // Take control of all clients immediately
     self.clients.claim();
+
+    // Notify all clients to refresh
+    self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+            client.postMessage({ type: 'SW_UPDATED' });
+        });
+    });
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - NETWORK FIRST strategy for HTML/JS, cache for static assets
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Cache hit - return response
-                if (response) {
-                    return response;
-                }
+    const url = new URL(event.request.url);
 
-                // Clone the request
-                const fetchRequest = event.request.clone();
+    // Skip non-GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
 
-                return fetch(fetchRequest).then((response) => {
-                    // Check if valid response
-                    if (!response || response.status !== 200 || response.type !== 'basic') {
-                        return response;
-                    }
+    // Skip external requests (Firebase, APIs, etc.)
+    if (!url.origin.includes(self.location.origin)) {
+        return;
+    }
 
-                    // Clone the response
-                    const responseToCache = response.clone();
+    // For HTML and JS files - ALWAYS go network first
+    if (event.request.mode === 'navigate' ||
+        url.pathname.endsWith('.js') ||
+        url.pathname.endsWith('.jsx') ||
+        url.pathname.endsWith('.css') ||
+        url.pathname === '/') {
 
-                    // Cache the fetched response for future use
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    // Got network response, cache it
+                    if (response.ok) {
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
                             cache.put(event.request, responseToCache);
                         });
-
+                    }
                     return response;
-                }).catch((err) => {
-                    console.log('Fetch failed:', err);
-                    // You can return a custom offline page here
-                    return caches.match('/index.html');
+                })
+                .catch(() => {
+                    // Network failed, try cache
+                    return caches.match(event.request)
+                        .then(cached => cached || caches.match('/index.html'));
+                })
+        );
+        return;
+    }
+
+    // For static assets (images) - cache first
+    event.respondWith(
+        caches.match(event.request)
+            .then((cached) => {
+                if (cached) {
+                    return cached;
+                }
+                return fetch(event.request).then((response) => {
+                    if (response.ok) {
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(event.request, responseToCache);
+                        });
+                    }
+                    return response;
                 });
             })
     );
+});
+
+// Listen for skip waiting message from client
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
