@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Target, Calendar, Award } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 import './Hero.css';
 
 const MOTIVATIONAL_MESSAGES = [
@@ -10,12 +11,36 @@ const MOTIVATIONAL_MESSAGES = [
     "Future Doctor Kajal, your patients are waiting.",
 ];
 
+// NEET 2026 Exam Date - Update this when official date is announced
+const EXAM_DATE = new Date('2026-05-04T00:00:00');
+
 const Hero = () => {
+    const { getCurrentRank } = useApp();
     const [displayText, setDisplayText] = useState('');
     const [messageIndex, setMessageIndex] = useState(0);
     const [isTyping, setIsTyping] = useState(true);
+    const [daysLeft, setDaysLeft] = useState(0);
 
     const currentMessage = MOTIVATIONAL_MESSAGES[messageIndex];
+    const currentRank = getCurrentRank();
+
+    // Calculate days left until exam
+    useEffect(() => {
+        const calculateDaysLeft = () => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diffTime = EXAM_DATE.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            setDaysLeft(Math.max(0, diffDays));
+        };
+
+        calculateDaysLeft();
+        // Update at midnight
+        const now = new Date();
+        const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
+        const timeout = setTimeout(calculateDaysLeft, msUntilMidnight);
+        return () => clearTimeout(timeout);
+    }, []);
 
     useEffect(() => {
         let timeout;
@@ -47,6 +72,9 @@ const Hero = () => {
         return 'Good Evening';
     };
 
+    // Format exam date
+    const examDateFormatted = EXAM_DATE.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
     return (
         <section className="hero-apple">
             <div className="hero-left">
@@ -70,7 +98,7 @@ const Hero = () => {
                             <Calendar size={18} />
                         </div>
                         <div className="stat-info">
-                            <span className="value">May 4</span>
+                            <span className="value">{examDateFormatted}</span>
                             <span className="label">Exam Date</span>
                         </div>
                     </div>
@@ -79,7 +107,7 @@ const Hero = () => {
                             <Target size={18} />
                         </div>
                         <div className="stat-info">
-                            <span className="value">120</span>
+                            <span className="value">{daysLeft}</span>
                             <span className="label">Days Left</span>
                         </div>
                     </div>
@@ -88,7 +116,7 @@ const Hero = () => {
                             <Award size={18} />
                         </div>
                         <div className="stat-info">
-                            <span className="value">Aspirant</span>
+                            <span className="value">{currentRank?.name || 'Aspirant'}</span>
                             <span className="label">Current Rank</span>
                         </div>
                     </div>

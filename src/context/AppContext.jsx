@@ -28,6 +28,7 @@ export const AppProvider = ({ children }) => {
     const [testScores, setTestScores] = useState([]);
     const [dailyQuestions, setDailyQuestions] = useState([]);
     const [stickyNotes, setStickyNotes] = useState([]);
+    const [calendarTasks, setCalendarTasks] = useState([]);
     const [stats, setStats] = useState({
         totalXP: 0,
         streakCurrent: 0,
@@ -117,13 +118,14 @@ export const AppProvider = ({ children }) => {
     // Load data from Firebase
     const loadFromFirebase = async () => {
         try {
-            const [tasks, scores, savedStats, notes, questions, savedTimerState] = await Promise.all([
+            const [tasks, scores, savedStats, notes, questions, savedTimerState, calTasks] = await Promise.all([
                 firebaseService.getCompletedTasks(),
                 firebaseService.getTestScores(),
                 firebaseService.getStats(),
                 firebaseService.getNotes(),
                 firebaseService.getQuestionLogs(),
-                firebaseService.getTimerState()
+                firebaseService.getTimerState(),
+                firebaseService.getCalendarTasks()
             ]);
 
             setCompletedTasks(tasks);
@@ -131,6 +133,7 @@ export const AppProvider = ({ children }) => {
             if (savedStats) setStats(savedStats);
             setStickyNotes(notes);
             setDailyQuestions(questions);
+            setCalendarTasks(calTasks);
 
             // Restore timer state if exists and timer was running
             if (savedTimerState && savedTimerState.expectedEndTime) {
@@ -188,12 +191,18 @@ export const AppProvider = ({ children }) => {
             setDailyQuestions(questions);
         });
 
+        // Listen to calendar tasks changes
+        const unsubCalendarTasks = firebaseService.onCalendarTasksChange((tasks) => {
+            setCalendarTasks(tasks);
+        });
+
         return () => {
             unsubTasks();
             unsubStats();
             unsubNotes();
             unsubScores();
             unsubQuestions();
+            unsubCalendarTasks();
         };
     };
 
@@ -430,6 +439,39 @@ export const AppProvider = ({ children }) => {
         }
     };
 
+    // Calendar Tasks CRUD
+    const addCalendarTask = async (task) => {
+        const newTask = {
+            id: `${Date.now()}`,
+            title: task.title,
+            date: task.date,
+            color: task.color || 'blue',
+            completed: false,
+            createdAt: new Date().toISOString()
+        };
+        await firebaseService.saveCalendarTask(newTask);
+        return newTask;
+    };
+
+    const updateCalendarTask = async (id, updates) => {
+        const task = calendarTasks.find(t => t.id === id);
+        if (task) {
+            const updatedTask = { ...task, ...updates, updatedAt: new Date().toISOString() };
+            await firebaseService.saveCalendarTask(updatedTask);
+        }
+    };
+
+    const deleteCalendarTask = async (id) => {
+        await firebaseService.deleteCalendarTask(id);
+    };
+
+    const toggleCalendarTaskComplete = async (id) => {
+        const task = calendarTasks.find(t => t.id === id);
+        if (task) {
+            await updateCalendarTask(id, { completed: !task.completed });
+        }
+    };
+
     // Get current rank based on XP
     const getCurrentRank = () => {
         let currentRank = RANKS[0];
@@ -526,6 +568,11 @@ export const AppProvider = ({ children }) => {
         updateStickyNote,
         deleteStickyNote,
         togglePinStickyNote,
+        calendarTasks,
+        addCalendarTask,
+        updateCalendarTask,
+        deleteCalendarTask,
+        toggleCalendarTaskComplete,
         timerState,
         setTimerState,
     };

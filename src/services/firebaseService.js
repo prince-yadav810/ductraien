@@ -346,3 +346,60 @@ export const onQuestionLogsChange = (callback) => {
         callback(logs);
     });
 };
+
+// ===== Calendar Tasks =====
+export const saveCalendarTask = async (task) => {
+    try {
+        const taskId = task.id || `${USER_ID}_${Date.now()}`;
+        await setDoc(doc(db, 'calendarTasks', taskId), {
+            ...task,
+            id: taskId,
+            userId: USER_ID,
+            updatedAt: new Date().toISOString()
+        });
+        return taskId;
+    } catch (error) {
+        console.error('Error saving calendar task:', error);
+        throw error;
+    }
+};
+
+export const getCalendarTasks = async () => {
+    try {
+        const snapshot = await getDocs(collection(db, 'calendarTasks'));
+        const tasks = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === USER_ID) {
+                tasks.push(data);
+            }
+        });
+        return tasks;
+    } catch (error) {
+        console.error('Error getting calendar tasks:', error);
+        return [];
+    }
+};
+
+export const deleteCalendarTask = async (taskId) => {
+    try {
+        await deleteDoc(doc(db, 'calendarTasks', taskId));
+    } catch (error) {
+        console.error('Error deleting calendar task:', error);
+        throw error;
+    }
+};
+
+export const onCalendarTasksChange = (callback) => {
+    const q = collection(db, 'calendarTasks');
+    return onSnapshot(q, (snapshot) => {
+        const tasks = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.userId === USER_ID) {
+                tasks.push(data);
+            }
+        });
+        callback(tasks);
+    });
+};
