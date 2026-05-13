@@ -7,63 +7,76 @@ import './ScheduleGrid.css';
 const ScheduleGrid = () => {
     const { completedTasks } = useApp();
 
-    // Get current date for highlighting
     const today = new Date().toISOString().split('T')[0];
 
-    // Calculate week progress
     const getWeekProgress = (week) => {
-        const completedDays = week.days.filter((day) => completedTasks[day.date]).length;
+        const completedDays = week.days.filter((day) => 
+            completedTasks[`${day.date}_fixed`] && 
+            completedTasks[`${day.date}_alt`] && 
+            completedTasks[`${day.date}_mock`]
+        ).length;
         return Math.round((completedDays / week.days.length) * 100);
+    };
+
+    const totalDaysCount = 31;
+    const completedDaysCount = Object.keys(completedTasks).reduce((count, key) => {
+        if (key.endsWith('_fixed')) {
+            const date = key.split('_')[0];
+            if (completedTasks[`${date}_alt`] && completedTasks[`${date}_mock`]) {
+                return count + 1;
+            }
+        }
+        return count;
+    }, 0);
+
+    const totalProgress = Math.round((completedDaysCount / totalDaysCount) * 100);
+
+    const getProgressColor = (percent) => {
+        if (percent < 40) return '#ef4444'; // red
+        if (percent < 80) return '#eab308'; // yellow
+        return '#22c55e'; // green
     };
 
     return (
         <div className="schedule-grid">
             <div className="schedule-header">
-                <h2 className="section-title">12-Week Revision Schedule</h2>
+                <h2 className="section-title">31-Day NEET Sprint</h2>
                 <p className="section-subtitle">
-                    Click on a day to mark it as completed. Track your progress week by week.
+                    May 15 → June 15 · No rest days
                 </p>
+                <div className="overall-progress-container">
+                    <div className="overall-progress-bar">
+                        <div 
+                            className="overall-progress-fill" 
+                            style={{ width: `${totalProgress}%` }}
+                        />
+                    </div>
+                    <span className="overall-progress-text mono">{completedDaysCount} / {totalDaysCount} days completed</span>
+                </div>
             </div>
 
             <div className="weeks-container">
                 {SCHEDULE_DATA.map((week) => {
-                    const progress = getWeekProgress(week);
-                    // Check if week contains today
                     const isActiveWeek = week.days.some(day => day.date === today);
 
                     return (
-                        <div
-                            key={week.week}
-                            className={`week-card card ${week.isIntense ? 'intense' : ''} ${week.isFinal ? 'final' : ''} ${isActiveWeek ? 'active-week-bento' : ''}`}
-                        >
-                            <div className="week-header">
-                                <div className="week-info">
-                                    <span className="week-number">Week {week.week}</span>
-                                    <span className={`phase-badge badge badge-${week.phase.toLowerCase()}`}>
-                                        {week.phase}
-                                    </span>
-                                    {isActiveWeek && <span className="current-badge">Current Week</span>}
+                        <div key={week.week} className="week-section">
+                            <div className="week-divider">
+                                <div className="week-divider-label">
+                                    Week {week.week} · {week.phase} · {week.startDate.split('-').slice(1).join('/')} - {week.endDate.split('-').slice(1).join('/')}
                                 </div>
-                                <div className="week-dates">
-                                    {week.startDate.split('-').slice(1).join('/')} - {week.endDate.split('-').slice(1).join('/')}
-                                </div>
+                                <div className="week-divider-line" />
                             </div>
 
-                            <div className="week-progress-bar">
-                                <div
-                                    className="week-progress-fill"
-                                    style={{ width: `${progress}%` }}
-                                />
-                                <span className="week-progress-text mono">{progress}%</span>
-                            </div>
-
-                            <div className={`days-grid ${isActiveWeek ? 'bento-grid' : ''}`}>
+                            <div className="days-grid">
                                 {week.days.map((day) => (
                                     <DayCard
                                         key={day.date}
                                         day={day}
                                         isToday={day.date === today}
-                                        isCompleted={!!completedTasks[day.date]}
+                                        isFixedDone={!!completedTasks[`${day.date}_fixed`]}
+                                        isAltDone={!!completedTasks[`${day.date}_alt`]}
+                                        isMockDone={!!completedTasks[`${day.date}_mock`]}
                                         isPast={new Date(day.date) < new Date(today)}
                                     />
                                 ))}

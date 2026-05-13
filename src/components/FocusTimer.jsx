@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Coffee, BookOpen, Volume2, VolumeX, BarChart2 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, PointElement, LineElement, LineController, Title, Tooltip, Legend } from 'chart.js';
 import * as firebaseService from '../services/firebaseService';
 import { useApp } from '../context/AppContext';
 import './FocusTimer.css';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, LineController, Title, Tooltip, Legend);
 
 const FocusTimer = () => {
     // Use context state for timer persistence across tab switches
@@ -288,15 +288,41 @@ const FocusTimer = () => {
 
     const dailyData = getDailyFocusData();
     const todayFocusMinutes = dailyData[6]?.minutes || 0;
+    const GOAL_MINUTES = 480;
+    
+    const formatHoursMins = (totalMins) => {
+        const h = Math.floor(totalMins / 60);
+        const m = totalMins % 60;
+        return `${h}h ${m.toString().padStart(2, '0')}m`;
+    };
+
+    const progressGoalPercent = Math.min(100, (todayFocusMinutes / GOAL_MINUTES) * 100);
+    let progressColor = '#ef4444'; // red
+    if (progressGoalPercent >= 80) progressColor = '#22c55e'; // green
+    else if (progressGoalPercent >= 40) progressColor = '#f97316'; // orange
 
     const chartData = {
         labels: dailyData.map(d => d.dayName),
-        datasets: [{
-            label: 'Focus Time (min)',
-            data: dailyData.map(d => d.minutes),
-            backgroundColor: 'rgba(0, 122, 255, 0.7)',
-            borderRadius: 6,
-        }]
+        datasets: [
+            {
+                type: 'line',
+                label: '8hr Goal',
+                data: Array(7).fill(GOAL_MINUTES),
+                borderColor: 'rgba(0, 0, 0, 0.4)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0,
+                pointHoverRadius: 0,
+                fill: false,
+            },
+            {
+                type: 'bar',
+                label: 'Focus Time',
+                data: dailyData.map(d => d.minutes),
+                backgroundColor: 'rgba(0, 122, 255, 0.7)',
+                borderRadius: 6,
+            }
+        ]
     };
 
     const chartOptions = {
@@ -307,16 +333,19 @@ const FocusTimer = () => {
             tooltip: {
                 callbacks: {
                     label: (context) => {
-                        const hours = Math.floor(context.raw / 60);
-                        const mins = context.raw % 60;
-                        return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+                        if (context.dataset.type === 'line') return '8hr goal';
+                        return formatHoursMins(context.raw);
                     }
                 }
             }
         },
         scales: {
             x: { grid: { display: false } },
-            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+            y: { 
+                beginAtZero: true, 
+                max: Math.max(GOAL_MINUTES, Math.max(...dailyData.map(d => d.minutes)) + 60),
+                grid: { color: 'rgba(0,0,0,0.05)' } 
+            }
         }
     };
 
@@ -445,36 +474,21 @@ const FocusTimer = () => {
             {/* Daily Focus Stats */}
             <div className="focus-stats-section">
                 <div className="focus-stats-header">
-                    <h3><BarChart2 size={20} /> Daily Focus Time</h3>
-                    <div className="today-focus">
-                        Today: <strong>{Math.floor(todayFocusMinutes / 60)}h {todayFocusMinutes % 60}m</strong>
+                    <h3><BarChart2 size={20} /> Daily Focus Goal</h3>
+                    <div className="today-focus-progress">
+                        <div className="progress-text">
+                            Today: <strong>{formatHoursMins(todayFocusMinutes)}</strong> / {formatHoursMins(GOAL_MINUTES)} ({Math.round((todayFocusMinutes / GOAL_MINUTES) * 100)}%)
+                        </div>
+                        <div className="goal-progress-bar">
+                            <div 
+                                className="goal-progress-fill" 
+                                style={{ width: `${progressGoalPercent}%`, backgroundColor: progressColor }}
+                            ></div>
+                        </div>
                     </div>
                 </div>
                 <div className="focus-chart-container">
                     <Bar data={chartData} options={chartOptions} />
-                </div>
-            </div>
-
-            {/* Tips section */}
-            <div className="timer-tips-section">
-                <h3>🍅 Pomodoro Technique</h3>
-                <div className="tips-grid">
-                    <div className="tip-item">
-                        <span className="tip-number">1</span>
-                        <p>Choose a task and set the timer for 25 minutes</p>
-                    </div>
-                    <div className="tip-item">
-                        <span className="tip-number">2</span>
-                        <p>Work with full focus until the timer rings</p>
-                    </div>
-                    <div className="tip-item">
-                        <span className="tip-number">3</span>
-                        <p>Take a short 5-minute break</p>
-                    </div>
-                    <div className="tip-item">
-                        <span className="tip-number">4</span>
-                        <p>After 4 sessions, take a longer 15-30 min break</p>
-                    </div>
                 </div>
             </div>
         </div>

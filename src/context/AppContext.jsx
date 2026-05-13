@@ -288,31 +288,39 @@ export const AppProvider = ({ children }) => {
     }, []);
 
     // Toggle task completion
-    const toggleTask = async (date, activityType) => {
+    const toggleTask = async (date, taskType, activityType) => {
+        const key = `${date}_${taskType}`;
         const newCompleted = { ...completedTasks };
-        const wasCompleted = newCompleted[date];
+        const wasCompleted = newCompleted[key];
 
         if (wasCompleted) {
-            delete newCompleted[date];
-            await firebaseService.deleteCompletedTask(date);
+            delete newCompleted[key];
+            await firebaseService.deleteCompletedTask(key);
         } else {
-            newCompleted[date] = {
+            newCompleted[key] = {
                 completedAt: new Date().toISOString(),
-                activityType
+                activityType: taskType === 'fixed' ? activityType : taskType
             };
-            await firebaseService.saveCompletedTask(date);
+            await firebaseService.saveCompletedTask(key);
         }
 
-        // Calculate new XP
-        const activity = ACTIVITY_TYPES[activityType];
-        const xpChange = wasCompleted ? -activity.xp : activity.xp;
+        // Calculate new XP ONLY for 'fixed'
+        let xpChange = 0;
+        if (taskType === 'fixed' && ACTIVITY_TYPES[activityType]) {
+            const activity = ACTIVITY_TYPES[activityType];
+            xpChange = wasCompleted ? -activity.xp : activity.xp;
+        }
 
         // Update streak
         const today = new Date().toISOString().split('T')[0];
         let newStreak = stats.streakCurrent;
         let newMaxStreak = stats.streakMax;
 
-        if (!wasCompleted && date === today) {
+        // Check if the day became fully complete or incomplete
+        const isNowFullyComplete = newCompleted[`${date}_fixed`] && newCompleted[`${date}_alt`] && newCompleted[`${date}_mock`];
+        const wasFullyComplete = completedTasks[`${date}_fixed`] && completedTasks[`${date}_alt`] && completedTasks[`${date}_mock`];
+
+        if (!wasFullyComplete && isNowFullyComplete && date === today) {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -330,7 +338,7 @@ export const AppProvider = ({ children }) => {
             totalXP: Math.max(0, stats.totalXP + xpChange),
             streakCurrent: newStreak,
             streakMax: newMaxStreak,
-            lastCompletedDate: !wasCompleted ? date : stats.lastCompletedDate,
+            lastCompletedDate: (!wasFullyComplete && isNowFullyComplete) ? date : stats.lastCompletedDate,
         };
 
         setCompletedTasks(newCompleted);
@@ -512,17 +520,26 @@ export const AppProvider = ({ children }) => {
 
     // Calculate statistics
     const getStatistics = () => {
-        const totalDays = 84;
-        const completedCount = Object.keys(completedTasks).length;
+        const totalDays = 31; // Updated from 84 to 31
+        
+        const completedCount = Object.keys(completedTasks).reduce((count, key) => {
+            if (key.endsWith('_fixed')) {
+                const date = key.split('_')[0];
+                if (completedTasks[`${date}_alt`] && completedTasks[`${date}_mock`]) {
+                    return count + 1;
+                }
+            }
+            return count;
+        }, 0);
+        
         const progressPercent = Math.round((completedCount / totalDays) * 100);
 
         let mocksCompleted = 0;
         let analysisCompleted = 0;
 
-        Object.values(completedTasks).forEach((task) => {
-            if (task.activityType && task.activityType.includes('MOCK')) mocksCompleted++;
-            if (task.activityType && task.activityType.includes('TEST')) mocksCompleted++;
-            if (task.activityType === 'ANALYSIS') analysisCompleted++;
+        Object.keys(completedTasks).forEach((key) => {
+            if (key.endsWith('_mock')) mocksCompleted++;
+            if (completedTasks[key].activityType === 'ANALYSIS') analysisCompleted++;
         });
 
         const maxScore = testScores.length > 0

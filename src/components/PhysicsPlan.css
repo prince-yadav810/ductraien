@@ -1,0 +1,387 @@
+/* ── Physics Plan Page ─────────────────────────────────────────── */
+
+.pp-page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+}
+
+/* Page header */
+.pp-page-header {
+    margin-bottom: 36px;
+}
+
+.pp-page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.5px;
+    margin: 0 0 6px;
+}
+
+.pp-page-subtitle {
+    font-size: 14px;
+    color: #86868b;
+    margin: 0;
+}
+
+/* ── Sections ──────────────────────────────────────────────────── */
+
+.pp-section {
+    margin-bottom: 48px;
+}
+
+.pp-section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1d1d1f;
+    margin: 0 0 20px;
+    letter-spacing: -0.3px;
+}
+
+.pp-section-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pp-section-header-row .pp-section-title {
+    margin: 0;
+}
+
+.pp-count-badge {
+    background: rgba(0, 122, 255, 0.1);
+    color: #007aff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 100px;
+}
+
+/* ── Blocks ────────────────────────────────────────────────────── */
+
+.pp-blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.pp-block-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-top: 3px solid var(--block-accent, #007aff);
+}
+
+.pp-block-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.pp-block-header:hover {
+    background: #f9f9fb;
+}
+
+.pp-block-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pp-block-header-right {
+    color: #86868b;
+}
+
+.pp-block-label {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.pp-duration-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pp-block-progress-text {
+    font-size: 12px;
+    color: #86868b;
+    font-weight: 500;
+}
+
+/* Chapter list */
+.pp-chapter-list {
+    padding: 0 20px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pp-chapter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f7;
+    transition: opacity 0.2s ease;
+}
+
+.pp-chapter-row:last-child {
+    border-bottom: none;
+}
+
+.pp-chapter-row.done .pp-chapter-name {
+    text-decoration: line-through;
+    color: #aeaeb2;
+}
+
+.pp-chapter-name {
+    flex: 1;
+    font-size: 14px;
+    color: #1d1d1f;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.pp-chapter-name:hover {
+    color: #007aff;
+}
+
+.pp-yt-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 0, 0, 0.08);
+    color: #ff3b30;
+    text-decoration: none;
+    transition: background 0.15s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.pp-yt-btn:hover {
+    background: rgba(255, 0, 0, 0.16);
+    transform: scale(1.1);
+}
+
+/* Block progress bar */
+.pp-block-progress-bar-wrap {
+    height: 4px;
+    background: #f5f5f7;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.pp-block-progress-bar-fill {
+    height: 100%;
+    border-radius: 0;
+    transition: width 0.5s ease;
+}
+
+/* ── Shared checkbox ────────────────────────────────────────────── */
+
+.pp-checkbox {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.pp-checkbox:hover {
+    transform: scale(1.15);
+}
+
+/* ── Resources ─────────────────────────────────────────────────── */
+
+.pp-resources-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.pp-resource-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.pp-resource-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.pp-resource-card.done {
+    opacity: 0.6;
+}
+
+.pp-resource-card.done .pp-resource-name {
+    text-decoration: line-through;
+    color: #aeaeb2;
+}
+
+.pp-resource-num {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 122, 255, 0.1);
+    color: #007aff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.pp-resource-name {
+    flex: 1;
+    font-size: 14px;
+    color: #1d1d1f;
+    font-weight: 500;
+    min-width: 0;
+}
+
+/* ── Open / link button ─────────────────────────────────────────── */
+
+.pp-open-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    background: rgba(0, 122, 255, 0.08);
+    color: #007aff;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.15s;
+}
+
+.pp-open-btn:hover {
+    background: rgba(0, 122, 255, 0.16);
+    transform: scale(1.04);
+}
+
+/* Download button */
+.pp-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: #007aff;
+    color: white;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 8px;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+}
+
+.pp-download-btn:hover {
+    background: #0066d6;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.35);
+}
+
+/* ── Experiments ────────────────────────────────────────────────── */
+
+.pp-exp-list {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.pp-exp-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f5f5f7;
+    transition: background 0.15s, opacity 0.2s;
+}
+
+.pp-exp-row:last-child {
+    border-bottom: none;
+}
+
+.pp-exp-row:hover {
+    background: #fafafa;
+}
+
+.pp-exp-row.done {
+    opacity: 0.6;
+}
+
+.pp-exp-row.done .pp-exp-name {
+    text-decoration: line-through;
+    color: #aeaeb2;
+}
+
+.pp-exp-num {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 122, 255, 0.08);
+    color: #007aff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.pp-exp-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .pp-blocks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pp-resources-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pp-page-title {
+        font-size: 24px;
+    }
+}

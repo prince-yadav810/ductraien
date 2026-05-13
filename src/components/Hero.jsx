@@ -12,7 +12,7 @@ const MOTIVATIONAL_MESSAGES = [
 ];
 
 // NEET 2026 Exam Date - Update this when official date is announced
-const EXAM_DATE = new Date('2026-05-04T00:00:00');
+const EXAM_DATE = new Date('2026-06-15T00:00:00');
 
 const Hero = () => {
     const { getCurrentRank } = useApp();
@@ -25,6 +25,8 @@ const Hero = () => {
     const currentRank = getCurrentRank();
 
     // Calculate days left until exam
+    const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
     useEffect(() => {
         const calculateDaysLeft = () => {
             const today = new Date();
@@ -34,12 +36,36 @@ const Hero = () => {
             setDaysLeft(Math.max(0, diffDays));
         };
 
+        const updateCountdown = () => {
+            const now = new Date().getTime();
+            const distance = EXAM_DATE.getTime() - now;
+
+            if (distance > 0) {
+                setTimeLeft({
+                    days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((distance % (1000 * 60)) / 1000)
+                });
+            } else {
+                setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+            }
+        };
+
         calculateDaysLeft();
+        updateCountdown();
+
+        const timer = setInterval(updateCountdown, 1000);
+        
         // Update at midnight
         const now = new Date();
         const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime() - now.getTime();
         const timeout = setTimeout(calculateDaysLeft, msUntilMidnight);
-        return () => clearTimeout(timeout);
+        
+        return () => {
+            clearInterval(timer);
+            clearTimeout(timeout);
+        };
     }, []);
 
     useEffect(() => {
@@ -124,9 +150,39 @@ const Hero = () => {
             </div>
 
             <div className="hero-right">
-                {/* Abstract decorative elements - subtle circles */}
-                <div className="apple-circle c1"></div>
-                <div className="apple-circle c2"></div>
+                <div className="hero-countdown-container">
+                    <div className="hero-countdown-content">
+                        <div className="hero-countdown-timer">
+                            <div className="hero-countdown-group">
+                                <div className="hero-countdown-block">
+                                    <span className="hero-countdown-number">{String(timeLeft.days).padStart(2, '0')}</span>
+                                </div>
+                                <span className="hero-countdown-label">Days</span>
+                            </div>
+                            <div className="hero-countdown-colon">:</div>
+                            <div className="hero-countdown-group">
+                                <div className="hero-countdown-block">
+                                    <span className="hero-countdown-number">{String(timeLeft.hours).padStart(2, '0')}</span>
+                                </div>
+                                <span className="hero-countdown-label">Hours</span>
+                            </div>
+                            <div className="hero-countdown-colon">:</div>
+                            <div className="hero-countdown-group">
+                                <div className="hero-countdown-block">
+                                    <span className="hero-countdown-number">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                                </div>
+                                <span className="hero-countdown-label">Minutes</span>
+                            </div>
+                            <div className="hero-countdown-colon">:</div>
+                            <div className="hero-countdown-group">
+                                <div className="hero-countdown-block">
+                                    <span className="hero-countdown-number">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                                </div>
+                                <span className="hero-countdown-label">Seconds</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     );

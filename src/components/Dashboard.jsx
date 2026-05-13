@@ -1,30 +1,43 @@
-import { CheckCircle, Flame, TrendingUp, Zap, Target, BarChart2, Award, Star, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { CheckCircle, Flame, TrendingUp, Zap, Target, BarChart2, Check, FlaskConical, Microscope, Leaf } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { SCHEDULE_DATA, RANKS, ACHIEVEMENTS } from '../data/scheduleData';
+import { SCHEDULE_DATA, ACTIVITY_TYPES } from '../data/scheduleData';
 import ScoreChart from './ScoreChart';
 import Hero from './Hero';
 import './Dashboard.css';
+
+const SUBJECT_STYLES = {
+    'PHY_B1': { color: '#007aff', icon: Zap, label: 'Physics' },
+    'PHY_B2': { color: '#007aff', icon: Zap, label: 'Physics' },
+    'PHY_B3': { color: '#007aff', icon: Zap, label: 'Physics' },
+    'PHY_B4': { color: '#007aff', icon: Zap, label: 'Physics' },
+    'PHY_PYQ': { color: '#007aff', icon: Zap, label: 'Physics' },
+    'PHY_FINAL': { color: '#007aff', icon: Zap, label: 'Physics' },
+    'ZOOLOGY': { color: '#8b5cf6', icon: Microscope, label: 'Zoology' },
+    'BOTANY': { color: '#16a34a', icon: Leaf, label: 'Botany' },
+    'CHEM': { color: '#ea580c', icon: FlaskConical, label: 'Chemistry' },
+};
 
 const Dashboard = () => {
     const {
         stats,
         completedTasks,
         testScores,
-        getCurrentRank,
-        getNextRank,
-        getXPProgress,
-        getUnlockedAchievements
     } = useApp();
 
-    // Calculate stats
-    const totalDays = SCHEDULE_DATA.reduce((acc, week) => acc + week.days.length, 0);
-    const completedCount = Object.keys(completedTasks).length;
-    const progressPercent = Math.round((completedCount / totalDays) * 100);
+    // 2. Calculate Stats
+    const totalDays = 31; // As per schedule update
+    const completedCount = Object.keys(completedTasks).reduce((count, key) => {
+        if (key.endsWith('_fixed')) {
+            const date = key.split('_')[0];
+            if (completedTasks[`${date}_alt`] && completedTasks[`${date}_mock`]) {
+                return count + 1;
+            }
+        }
+        return count;
+    }, 0);
 
-    const currentRank = getCurrentRank();
-    const nextRank = getNextRank();
-    const xpProgress = getXPProgress();
-    const unlockedAchievements = getUnlockedAchievements();
+    const progressPercent = Math.round((completedCount / totalDays) * 100);
 
     const avgScore = testScores.length > 0
         ? Math.round(testScores.reduce((acc, s) => acc + s.total, 0) / testScores.length)
@@ -33,6 +46,17 @@ const Dashboard = () => {
     const bestScore = testScores.length > 0
         ? Math.max(...testScores.map((s) => s.total))
         : 0;
+
+    // 3. Today's Tasks Setup
+    const todayStr = new Date().toISOString().split('T')[0];
+    let todaysTasks = null;
+    for (const week of SCHEDULE_DATA) {
+        const day = week.days.find(d => d.date === todayStr);
+        if (day) {
+            todaysTasks = day;
+            break;
+        }
+    }
 
     // Quick Stats Cards
     const statCards = [
@@ -61,7 +85,7 @@ const Dashboard = () => {
             icon: Zap,
             label: 'Total XP',
             value: stats.totalXP,
-            subValue: currentRank.name,
+            subValue: '',
             color: 'purple',
         },
         {
@@ -80,10 +104,57 @@ const Dashboard = () => {
         },
     ];
 
+    const renderTaskRow = (subjectKey, label, taskType) => {
+        if (!subjectKey) return null;
+        
+        const isDone = !!completedTasks[`${todayStr}_${taskType}`];
+        let style = { color: '#dc2626', icon: Target }; // default for Mock
+        let displayLabel = label;
+
+        if (taskType !== 'mock') {
+            style = SUBJECT_STYLES[subjectKey] || { color: '#007aff', icon: Zap };
+            displayLabel = ACTIVITY_TYPES[subjectKey]?.short || subjectKey;
+        }
+
+        const IconComponent = style.icon;
+
+        return (
+            <div className={`today-task-row ${isDone ? 'done' : ''}`} key={taskType}>
+                <div className="task-row-info">
+                    <div className="task-row-icon" style={{ color: style.color }}>
+                        <IconComponent size={20} />
+                    </div>
+                    <span className="task-row-label">{displayLabel}</span>
+                </div>
+                <div className="task-row-status">
+                    {isDone ? (
+                        <CheckCircle size={20} className="status-icon done-icon" />
+                    ) : (
+                        <div className="status-circle" />
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="dashboard fade-in">
             {/* Hero Section */}
             <Hero />
+
+            {/* Today's Tasks */}
+            <div className="todays-tasks-card card">
+                <h3 className="card-title">Today's Tasks</h3>
+                {todaysTasks ? (
+                    <div className="todays-tasks-list">
+                        {renderTaskRow(todaysTasks.fixedSubject, '', 'fixed')}
+                        {renderTaskRow(todaysTasks.altSubject, '', 'alt')}
+                        {renderTaskRow('MOCK', 'Mock Test', 'mock')}
+                    </div>
+                ) : (
+                    <p className="no-tasks-message">No tasks scheduled for today.</p>
+                )}
+            </div>
 
             {/* Header */}
             <div className="dashboard-header">
@@ -101,11 +172,12 @@ const Dashboard = () => {
                         <div className="stat-content">
                             <span className="stat-value mono">{card.value}</span>
                             <span className="stat-label">{card.label}</span>
-                            <span className="stat-subvalue">{card.subValue}</span>
+                            {card.subValue && <span className="stat-subvalue">{card.subValue}</span>}
                         </div>
                     </div>
                 ))}
             </div>
+
 
             {/* Progress Overview */}
             <div className="progress-overview card">
@@ -118,29 +190,9 @@ const Dashboard = () => {
                     />
                 </div>
                 <div className="progress-labels">
-                    <span>Start: Jan 5</span>
+                    <span>Start: May 15</span>
                     <span className="mono">{progressPercent}% Complete</span>
-                    <span>NEET: May 4</span>
-                </div>
-
-                {/* XP Progress */}
-                <div className="xp-progress-section">
-                    <div className="xp-header">
-                        <span className="rank-display">
-                            <span className="rank-icon">{currentRank.icon}</span>
-                            <span className="rank-name">{currentRank.name}</span>
-                        </span>
-                        <span className="xp-text mono">{stats.totalXP} XP</span>
-                    </div>
-                    <div className="xp-bar">
-                        <div
-                            className="xp-fill"
-                            style={{ width: `${xpProgress.percent}%` }}
-                        />
-                    </div>
-                    <p className="xp-description">
-                        {xpProgress.current} / {xpProgress.needed} XP to next rank
-                    </p>
+                    <span>NEET: June 15</span>
                 </div>
             </div>
 
@@ -151,93 +203,6 @@ const Dashboard = () => {
                 </div>
             )}
 
-            {/* Rank Progression */}
-            <div className="ranks-overview card">
-                <h3 className="card-title">Rank Progression</h3>
-                <div className="ranks-list">
-                    {RANKS.map((rank) => {
-                        const isUnlocked = stats.totalXP >= rank.minXP;
-                        const isCurrent = rank.name === currentRank.name;
-
-                        return (
-                            <div
-                                key={rank.name}
-                                className={`rank-item ${isUnlocked ? 'unlocked' : ''} ${isCurrent ? 'current' : ''}`}
-                            >
-                                <div className="rank-item-icon" style={{ color: isUnlocked ? rank.color : undefined }}>
-                                    {rank.icon}
-                                </div>
-                                <div className="rank-item-info">
-                                    <span className="rank-item-name">{rank.name}</span>
-                                    <span className="rank-item-xp mono">{rank.minXP} XP</span>
-                                </div>
-                                {!isUnlocked && <Lock size={14} className="lock-icon" />}
-                                {isCurrent && <span className="current-badge">Current</span>}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Achievements */}
-            <div className="achievements card">
-                <h3 className="card-title">
-                    <Award size={18} />
-                    Achievements
-                    <span className="achievement-count">
-                        {unlockedAchievements.length} / {ACHIEVEMENTS.length}
-                    </span>
-                </h3>
-
-                <div className="achievements-grid">
-                    {ACHIEVEMENTS.map((achievement) => {
-                        const isUnlocked = unlockedAchievements.some(a => a.id === achievement.id);
-
-                        return (
-                            <div
-                                key={achievement.id}
-                                className={`achievement-item ${isUnlocked ? 'unlocked' : ''}`}
-                            >
-                                <span className="achievement-icon">{achievement.icon}</span>
-                                <div className="achievement-info">
-                                    <span className="achievement-name">{achievement.name}</span>
-                                    <span className="achievement-desc">{achievement.description}</span>
-                                </div>
-                                {isUnlocked && (
-                                    <Star size={16} className="achievement-star" />
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* XP Breakdown */}
-            <div className="xp-breakdown card">
-                <h3 className="card-title">XP System</h3>
-                <div className="xp-rules">
-                    <div className="xp-rule">
-                        <span className="rule-activity">Mock Test / Test</span>
-                        <span className="rule-xp badge badge-orange">+50 XP</span>
-                    </div>
-                    <div className="xp-rule">
-                        <span className="rule-activity">Analysis</span>
-                        <span className="rule-xp badge badge-purple">+30 XP</span>
-                    </div>
-                    <div className="xp-rule">
-                        <span className="rule-activity">Backlog</span>
-                        <span className="rule-xp badge badge-red">+20 XP</span>
-                    </div>
-                    <div className="xp-rule">
-                        <span className="rule-activity">Revision</span>
-                        <span className="rule-xp badge badge-blue">+10 XP</span>
-                    </div>
-                    <div className="xp-rule">
-                        <span className="rule-activity">Rest Day</span>
-                        <span className="rule-xp badge badge-green">+5 XP</span>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
